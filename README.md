@@ -14,7 +14,7 @@ A full-stack contact management system that allows users to securely register, l
 
 -Download all contacts as a single .vcf file
 
-=Mobile-responsive design
+-Mobile-responsive design
 
 # Live demo
 https://contact-management-app-w1p5.onrender.com
