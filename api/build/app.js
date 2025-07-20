@@ -17,6 +17,8 @@ const addContactModalBtn = document.getElementById("add-contact-modal-btn");
 const modalContactName = document.getElementById("modal-contact-name");
 const modalContactPhone = document.getElementById("modal-contact-phone");
 const downloadVcfBtn = document.getElementById("download-vcf");
+const importVcfBtn = document.getElementById("import-vcf-btn");
+const importVcfInput = document.getElementById("import-vcf-input");
 
 let allContacts = [];
 let filteredContacts = [];
@@ -263,6 +265,52 @@ END:VCARD`).join("\n");
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+};
+
+// Import Contacts logic
+importVcfBtn.onclick = () => {
+    importVcfInput.value = ""; // reset file input
+    importVcfInput.click();
+};
+
+importVcfInput.onchange = async function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const text = e.target.result;
+        // Parse vCard: look for BEGIN:VCARD ... END:VCARD blocks
+        const cards = text.split(/END:VCARD/i).map(c => c.trim()).filter(Boolean);
+        let imported = 0, failed = 0;
+        for (let card of cards) {
+            card += "\nEND:VCARD"; // add back END:VCARD
+            const nameMatch = card.match(/FN:(.+)/i);
+            const phoneMatch = card.match(/TEL[^:]*:([\d+\- ]+)/i);
+            const name = nameMatch ? nameMatch[1].trim() : null;
+            const phone = phoneMatch ? phoneMatch[1].replace(/\s+/g, "") : null;
+            if (name && phone) {
+                try {
+                    const res = await fetch(`${API_BASE}/contacts`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${getToken()}`
+                        },
+                        body: JSON.stringify({ name, phone })
+                    });
+                    if (res.ok) imported++;
+                    else failed++;
+                } catch {
+                    failed++;
+                }
+            } else {
+                failed++;
+            }
+        }
+        showMessage(`Imported: ${imported}, Failed: ${failed}`, failed ? "red" : "green");
+        fetchContacts();
+    };
+    reader.readAsText(file);
 };
 
 // On page load

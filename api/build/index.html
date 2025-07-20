@@ -56,9 +56,15 @@
               <ul id="contacts-list" class="space-y-2">
                 <!-- Contact items will be rendered here -->
               </ul>
-              <button id="download-vcf" class="bg-green-600 text-white px-4 py-2 rounded hidden">
-                Save to Phone (.vcf)
-              </button>
+              <div class="flex flex-col sm:flex-row gap-2 w-full">
+                <button id="download-vcf" class="bg-green-600 text-white px-4 py-2 rounded w-full sm:w-auto hidden">
+                  Save to Phone (.vcf)
+                </button>
+                <input type="file" id="import-vcf-input" accept=".vcf,text/vcard" class="hidden" />
+                <button id="import-vcf-btn" class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto">
+                  Import Contacts (.vcf)
+                </button>
+              </div>
               <div id="message" class="text-center text-sm text-red-400"></div>
           </div>
       </div>
