@@ -1,5 +1,5 @@
 # Contacts management app
-A full-stack contact management system that allows users to securely register, log in, and manage their personal contacts. Built with Node.js, Express, MongoDB, and Vanilla JavaScript.
+A full-stack contact management system that allows users to securely register, log in, and manage their personal contacts. Built with Node.js, Express, MongoDB, and Vanilla JavaScript. Built this to learn backend, frontend mainly vibe coded.
 
 # Features
 User registration and login (with JWT authentication)
