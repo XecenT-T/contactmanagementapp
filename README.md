@@ -2,13 +2,19 @@
 A full-stack contact management system that allows users to securely register, log in, and manage their personal contacts. Built with Node.js, Express, MongoDB, and Vanilla JavaScript. Built this to learn backend, frontend mainly vibe coded.
 
 # Features
-User registration and login (with JWT authentication)
-Add, edit, and delete contacts
-Save contacts on the backend (MongoDB)
-Frontend made with plain HTML/CSS/JavaScript
-Logout functionality
-Download all contacts as a single .vcf file
-Mobile-responsive design
+-User registration and login (with JWT authentication)
+
+-Add, edit, and delete contacts
+
+-Save contacts on the backend (MongoDB)
+
+-Frontend made with plain HTML/CSS/JavaScript
+
+-Logout functionality
+
+-Download all contacts as a single .vcf file
+
+=Mobile-responsive design
 
 # Live demo
 https://contact-management-app-w1p5.onrender.com
