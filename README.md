@@ -23,3 +23,8 @@ https://contact-management-app-w1p5.onrender.com
 <img width="1882" height="965" alt="image" src="https://github.com/user-attachments/assets/57a76f9c-fe16-4fe3-8d43-8c45148a24fe" />
 <img width="1878" height="982" alt="image" src="https://github.com/user-attachments/assets/80780c8f-a6aa-4617-8817-75b7de822b4e" />
 
+# Features to add
+-Let users upload a profile image for each contact
+
+-more fields: address, notes, email, company, etc.
+
