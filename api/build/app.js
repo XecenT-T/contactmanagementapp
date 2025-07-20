@@ -1,4 +1,3 @@
-
 const API_BASE = "/api";
 
 const registerForm = document.getElementById("register-form");
@@ -8,13 +7,23 @@ const showRegister = document.getElementById("show-register");
 const authSection = document.getElementById("auth-section");
 const appSection = document.getElementById("app-section");
 const logoutBtn = document.getElementById("logout-btn");
-const addContactForm = document.getElementById("add-contact-form");
 const contactsList = document.getElementById("contacts-list");
 const messageDiv = document.getElementById("message");
+const searchBar = document.getElementById("search-bar");
+const openAddModalBtn = document.getElementById("open-add-modal");
+const addModal = document.getElementById("add-modal");
+const closeAddModalBtn = document.getElementById("close-add-modal");
+const addContactModalBtn = document.getElementById("add-contact-modal-btn");
+const modalContactName = document.getElementById("modal-contact-name");
+const modalContactPhone = document.getElementById("modal-contact-phone");
+const downloadVcfBtn = document.getElementById("download-vcf");
+
+let allContacts = [];
+let filteredContacts = [];
 
 function showMessage(msg, color = "red") {
     messageDiv.textContent = msg;
-    messageDiv.className = `text-center text-sm text-${color}-600`;
+    messageDiv.className = `text-center text-sm text-${color}-400`;
     setTimeout(() => { messageDiv.textContent = ""; }, 3000);
 }
 
@@ -40,7 +49,7 @@ function clearToken() {
     localStorage.removeItem("token");
 }
 
-
+// Switch forms
 showLogin.onclick = (e) => {
     e.preventDefault();
     registerForm.classList.add("hidden");
@@ -52,7 +61,7 @@ showRegister.onclick = (e) => {
     registerForm.classList.remove("hidden");
 };
 
-
+// Register
 registerForm.onsubmit = async (e) => {
     e.preventDefault();
     const username = document.getElementById("reg-username").value;
@@ -64,13 +73,7 @@ registerForm.onsubmit = async (e) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email, password })
         });
-        if (!res.ok) {
-            let data = {};
-            try {
-                data = await res.json();
-            } catch {}
-            throw new Error(data.message || "Registration failed");
-        }
+        if (!res.ok) throw new Error((await res.json()).message || "Registration failed");
         showMessage("Registration successful! Please login.", "green");
         registerForm.reset();
         registerForm.classList.add("hidden");
@@ -80,6 +83,7 @@ registerForm.onsubmit = async (e) => {
     }
 };
 
+// Login
 loginForm.onsubmit = async (e) => {
     e.preventDefault();
     const email = document.getElementById("login-email").value;
@@ -90,13 +94,7 @@ loginForm.onsubmit = async (e) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
         });
-        if (!res.ok) {
-            let data = {};
-            try {
-                data = await res.json();
-            } catch {}
-            throw new Error(data.message || "Login failed");
-        }
+        if (!res.ok) throw new Error((await res.json()).message || "Login failed");
         const token = await res.json();
         setToken(token);
         setAuthUI(true);
@@ -106,58 +104,33 @@ loginForm.onsubmit = async (e) => {
     }
 };
 
-
+// Logout
 logoutBtn.onclick = () => {
     clearToken();
     setAuthUI(false);
     contactsList.innerHTML = "";
 };
 
-async function fetchContacts() {
-    try {
-        const res = await fetch(`${API_BASE}/contacts`, {
-            headers: { Authorization: `Bearer ${getToken()}` }
-        });
-        if (!res.ok) throw new Error("Failed to fetch contacts");
-        const contacts = await res.json();
-        renderContacts(contacts);
-    } catch (err) {
-        showMessage(err.message);
-    }
-}
+// Modal logic
+openAddModalBtn.onclick = () => {
+    addModal.classList.remove("hidden");
+    modalContactName.value = "";
+    modalContactPhone.value = "";
+    modalContactName.focus();
+};
+closeAddModalBtn.onclick = () => {
+    addModal.classList.add("hidden");
+};
+addModal.onclick = (e) => {
+    if (e.target === addModal) addModal.classList.add("hidden");
+};
 
-function renderContacts(contacts) {
-    contactsList.innerHTML = "";
-    if (contacts.length === 0) {
-        contactsList.innerHTML = '<li class="text-gray-500 text-center">No contacts found.</li>';
-        return;
-    }
-    contacts.forEach(contact => {
-        const li = document.createElement("li");
-        li.className = "flex items-center justify-between bg-slate-100 rounded px-3 py-2";
-        li.innerHTML = `
-            <div>
-                <span class="font-semibold">${contact.name}</span>
-                <span class="ml-2 text-gray-600">${contact.phone}</span>
-            </div>
-            <div class="flex gap-2">
-                <button class="edit-btn text-blue-600 underline text-sm">Edit</button>
-                <button class="delete-btn text-red-600 underline text-sm">Delete</button>
-            </div>
-        `;
-        
-        li.querySelector(".edit-btn").onclick = () => editContactPrompt(contact);
-       
-        li.querySelector(".delete-btn").onclick = () => deleteContact(contact.name);
-        contactsList.appendChild(li);
-    });
-}
-
-
-addContactForm.onsubmit = async (e) => {
+// Add contact from modal
+addContactModalBtn.onclick = async (e) => {
     e.preventDefault();
-    const name = document.getElementById("contact-name").value;
-    const phone = document.getElementById("contact-phone").value;
+    const name = modalContactName.value.trim();
+    const phone = modalContactPhone.value.trim();
+    if (!name || !phone) return showMessage("Please enter both name and phone.");
     try {
         const res = await fetch(`${API_BASE}/contacts`, {
             method: "POST",
@@ -167,21 +140,67 @@ addContactForm.onsubmit = async (e) => {
             },
             body: JSON.stringify({ name, phone })
         });
-        if (!res.ok) {
-            let data = {};
-            try {
-                data = await res.json();
-            } catch {}
-            throw new Error(data.message || "Failed to add contact");
-        }
-        addContactForm.reset();
+        if (!res.ok) throw new Error((await res.json()).message || "Failed to add contact");
+        addModal.classList.add("hidden");
         fetchContacts();
     } catch (err) {
         showMessage(err.message);
     }
 };
 
+// Fetch contacts
+async function fetchContacts() {
+    try {
+        const res = await fetch(`${API_BASE}/contacts`, {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch contacts");
+        allContacts = await res.json();
+        filterAndRenderContacts();
+        downloadVcfBtn.classList.remove("hidden");
+    } catch (err) {
+        showMessage(err.message);
+    }
+}
 
+// Search logic
+searchBar.oninput = () => filterAndRenderContacts();
+
+function filterAndRenderContacts() {
+    const query = searchBar.value.trim().toLowerCase();
+    filteredContacts = query
+        ? allContacts.filter(c => c.name.toLowerCase().includes(query) || c.phone.toLowerCase().includes(query))
+        : allContacts;
+    renderContacts(filteredContacts);
+}
+
+// Render contacts
+function renderContacts(contacts) {
+    contactsList.innerHTML = "";
+    if (contacts.length === 0) {
+        contactsList.innerHTML = '<li class="text-gray-500 text-center">No contacts found.</li>';
+        return;
+    }
+    contacts.forEach(contact => {
+        const li = document.createElement("li");
+        li.className = "flex items-center justify-between bg-slate-900/60 rounded px-3 py-2 text-white";
+        li.innerHTML = `
+            <div>
+                <span class="font-semibold">${contact.name}</span>
+                <span class="ml-2 text-gray-300">${contact.phone}</span>
+            </div>
+            <div class="flex gap-2">
+                <button class="edit-btn text-blue-400 underline text-sm">Edit</button>
+                <button class="delete-btn text-red-400 underline text-sm">Delete</button>
+            </div>
+        `;
+        li.querySelector(".edit-btn").onclick = () => editContactPrompt(contact);
+        li.querySelector(".delete-btn").onclick = () => deleteContact(contact.name);
+        contactsList.appendChild(li);
+    });
+}
+
+// Edit contact
 function editContactPrompt(contact) {
     const newName = prompt("Edit name:", contact.name);
     if (newName === null) return;
@@ -200,20 +219,14 @@ async function updateContact(oldName, data) {
             },
             body: JSON.stringify(data)
         });
-        if (!res.ok) {
-            let d = {};
-            try {
-                d = await res.json();
-            } catch {}
-            throw new Error(d.message || "Failed to update contact");
-        }
+        if (!res.ok) throw new Error((await res.json()).message || "Failed to update contact");
         fetchContacts();
     } catch (err) {
         showMessage(err.message);
     }
 }
 
-
+// Delete contact
 async function deleteContact(name) {
     if (!confirm("Are you sure you want to delete this contact?")) return;
     try {
@@ -221,20 +234,38 @@ async function deleteContact(name) {
             method: "DELETE",
             headers: { Authorization: `Bearer ${getToken()}` }
         });
-        if (!res.ok) {
-            let d = {};
-            try {
-                d = await res.json();
-            } catch {}
-            throw new Error(d.message || "Failed to delete contact");
-        }
+        if (!res.ok) throw new Error((await res.json()).message || "Failed to delete contact");
         fetchContacts();
     } catch (err) {
         showMessage(err.message);
     }
 }
 
+// Download contacts as VCF
+downloadVcfBtn.onclick = () => {
+    if (!allContacts || allContacts.length === 0) {
+        showMessage("No contacts to download.");
+        return;
+    }
+    const vcfData = allContacts.map(c => 
+`BEGIN:VCARD
+VERSION:3.0
+FN:${c.name}
+TEL;TYPE=CELL:${c.phone}
+END:VCARD`).join("\n");
 
+    const blob = new Blob([vcfData], { type: "text/vcard" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "contacts.vcf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
+// On page load
 window.onload = () => {
     if (getToken()) {
         setAuthUI(true);
@@ -242,4 +273,4 @@ window.onload = () => {
     } else {
         setAuthUI(false);
     }
-}; 
+};
